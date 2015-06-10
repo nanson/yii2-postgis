@@ -1,5 +1,5 @@
 {
-	"name": "nanson/postgis",
+	"name": "nanson/yii2-postgis",
 	"description": "Behavior to work with postgis data",
 	"keywords": ["postgis", "yii2", "behavior"],
 	"homepage": "https://github.com/nanson/yii2-postgis",
