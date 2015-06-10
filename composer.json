@@ -1,0 +1,22 @@
+{
+	"name": "nanson/postgis",
+	"description": "Behavior to work with postgis data",
+	"keywords": ["postgis", "yii2", "behavior"],
+	"homepage": "https://github.com/nanson/yii2-postgis",
+	"type": "yii2-extension",
+	"license": "GNU",
+	"authors": [
+		{
+			"name": "Denis Chernyavsky",
+			"email": "panopticum87@gmail.com"
+		}
+	],
+	"require": {
+		"yiisoft/yii2": "*"
+	},
+	"autoload": {
+		"psr-4": {
+			"nanson\\postgis\\": "lib"
+		}
+	}
+}
