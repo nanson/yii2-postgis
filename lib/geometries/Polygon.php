@@ -1,7 +1,6 @@
 <?php
 
 namespace nanson\postgis\geometries;
-use yii\helpers\Json;
 
 /**
  * Class Polygon
@@ -18,18 +17,23 @@ class Polygon implements IGeometry
 	public function arrayToWkt($coordinates)
 	{
 
-		$latLngs = [];
+		$linestrings = [];
 
-		foreach ($coordinates as $latLng) {
-			$latLngs[] = implode(' ', $latLng);
+		foreach ($coordinates as $linestring) {
+
+			foreach ($linestring as $key => $point) {
+				$linestring[$key] = implode(' ', $point);
+			}
+
+			if ( $linestring[0] != $linestring[count($linestring) -1] ) {
+				$linestring[] = $linestring[0];
+			}
+
+			$linestrings[] = '('.implode(',', $linestring).')';
+
 		}
 
-		if ($latLngs[0] != $latLngs[count($latLngs)-1]) {
-			$latLngs[] = $latLngs[0];
-		}
-
-
-		$wkt = self::GEOMETRY_NAME.'(('.implode(' ', $latLngs).'))';
+		$wkt = self::GEOMETRY_NAME.'('.implode(',', $linestrings).')';
 
 		return $wkt;
 
@@ -44,18 +48,28 @@ class Polygon implements IGeometry
 			return false;
 		}
 
-		$coordinatesString = str_replace([self::GEOMETRY_NAME, '(', ')'], '', $wkt);
+		$wkt = str_replace(', ', ',', $wkt);
+		$wkt = str_replace(self::GEOMETRY_NAME, '', $wkt);
 
-		$latLngs = explode(',', $coordinatesString);
+		$points = [];
+		$linestrings = explode('),(', $wkt);
 
-		if (count($latLngs) == 0) {
+		foreach ($linestrings as $linestring) {
+			$linestring = ltrim($linestring, '(');
+
+			$linestringPoints = explode(',', $linestring);
+
+			foreach($linestringPoints as $key => $point) {
+				$linestringPoints[$key] = explode(' ', $point);
+			}
+
+			$points[] = $linestringPoints;
+		}
+
+		if (count($points) == 0) {
 			return false;
 		}
 
-		foreach ($latLngs as $latLng) {
-			$coordinatesArray = explode(' ', $latLng);
-		}
-
-		return $coordinatesArray;
+		return $points;
 	}
 }

@@ -8,8 +8,7 @@ use yii\db\Expression;
 use yii\db\Query;
 use yii\helpers\ArrayHelper;
 use yii\base\InvalidConfigException;
-use nanson\postgis\geometries\Point;
-use nanson\postgis\geometries\Polygon;
+use nanson\postgis\geometries;
 
 /**
  * Class PostgisBehavior
@@ -39,8 +38,10 @@ class PostgisBehavior extends Behavior
 	 * ```
 	 */
 	public $geometriesClassNames = [
-		Point::GEOMETRY_NAME => '\nanson\postgis\geometries\Point',
-		Polygon::GEOMETRY_NAME => '\nanson\postgis\geometries\Polygon',
+		geometries\Point::GEOMETRY_NAME => '\nanson\postgis\geometries\Point',
+		geometries\LineString::GEOMETRY_NAME => '\nanson\postgis\geometries\LineString',
+		geometries\Polygon::GEOMETRY_NAME => '\nanson\postgis\geometries\Polygon',
+		geometries\MultiPoint::GEOMETRY_NAME => '\nanson\postgis\geometries\MultiPoint',
 	];
 
 	/**
