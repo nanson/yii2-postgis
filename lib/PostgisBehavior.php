@@ -155,7 +155,7 @@ class PostgisBehavior extends Behavior
 	{
 		$attribute = $this->attribute;
 
-		$this->owner->$attribute = str_replace(["ST_GeomFromText('", "')'"], '', $this->owner->$attribute);
+		$this->owner->$attribute = str_replace(["ST_GeomFromText('", "')"], '', $this->owner->$attribute);
 
 		if ( !empty($this->owner->$attribute) ) {
 			$this->owner->$attribute = $this->geometry->wktToArray($this->owner->$attribute);
