@@ -11,14 +11,14 @@ interface IGeometry
 
 	/**
 	 * Convert array to wkt
-	 * @param $coordinates
+	 * @param array $coordinates
 	 * @return string;
 	 */
 	public function arrayToWkt($coordinates);
 
 	/**
 	 * Convert wkt to array
-	 * @param $wkt
+	 * @param string $wkt
 	 * @return array|bool
 	 */
 	public  function wktToArray($wkt);

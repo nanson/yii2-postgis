@@ -13,11 +13,10 @@ use nanson\postgis\geometries;
 /**
  * Class PostgisBehavior
  * Handle model attribute stored in postgis format
- * @package nanson\postgis
- * @author Chernyavsky Denis <panopticum87@gmail.com>
- *
  * @property string $type postgis geometry name
  * @property-read mixed $geomtry object implements IGeometry
+ * @package nanson\postgis
+ * @author Chernyavsky Denis <panopticum87@gmail.com>
  */
 class PostgisBehavior extends Behavior
 {
@@ -98,7 +97,14 @@ class PostgisBehavior extends Behavior
 	 */
 	public function beforeSave()
 	{
+
+		$attributeChanged = $this->owner->isAttributeChanged($this->attribute);
+
 		$this->arrayToWkt();
+
+		if (!$attributeChanged) {
+			$this->owner->setOldAttribute($this->attribute, $this->owner->{$this->attribute});
+		}
 
 		return true;
 	}
@@ -109,7 +115,10 @@ class PostgisBehavior extends Behavior
 	 */
 	public function afterSave()
 	{
+
 		$this->wktToArray();
+
+		$this->owner->setOldAttribute($this->attribute, $this->owner->{$this->attribute});
 
 		return true;
 	}
@@ -123,6 +132,8 @@ class PostgisBehavior extends Behavior
 		$this->postgisToWkt();
 
 		$this->wktToArray();
+
+		$this->owner->setOldAttribute($this->attribute, $this->owner->{$this->attribute});
 
 		return true;
 	}
