@@ -29,6 +29,11 @@ class PostgisBehavior extends Behavior
 	public $type;
 
 	/**
+	 * @var bool don't convert attribute afterFind
+	 */
+	public $exceptAfterFind = false;
+
+	/**
 	 * @var array list of names for geometries
 	 */
 	protected $_geometriesNames = ['Point', 'MultiPoint', 'LineString', 'MultiLineString', 'Polygon', 'MultiPolygon',];
@@ -44,13 +49,18 @@ class PostgisBehavior extends Behavior
 	public function events()
 	{
 
-		return [
+		$events = [
 			ActiveRecord::EVENT_BEFORE_INSERT => "beforeSave",
 			ActiveRecord::EVENT_BEFORE_UPDATE => "beforeSave",
 			ActiveRecord::EVENT_AFTER_INSERT => "afterSave",
 			ActiveRecord::EVENT_AFTER_UPDATE => "afterSave",
-			ActiveRecord::EVENT_AFTER_FIND => "afterFind",
 		];
+
+		if ( !$this->exceptAfterFind ) {
+			$events[ActiveRecord::EVENT_AFTER_FIND] = "afterFind";
+		}
+
+		return $events;
 
 	}
 
@@ -117,6 +127,7 @@ class PostgisBehavior extends Behavior
 	 */
 	public function afterFind()
 	{
+
 		if ( !is_object( json_decode($this->owner->{$this->attribute}) ) ) {
 			$this->wkbToGeoJson();
 		}
