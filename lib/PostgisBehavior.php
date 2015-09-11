@@ -117,7 +117,9 @@ class PostgisBehavior extends Behavior
 	 */
 	public function afterFind()
 	{
-		$this->wkbToGeoJson();
+		if ( !is_object( json_decode($this->owner->{$this->attribute}) ) ) {
+			$this->wkbToGeoJson();
+		}
 
 		$this->geoJsonToCoordinates();
 
