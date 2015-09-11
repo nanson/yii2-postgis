@@ -6,9 +6,7 @@ use yii\db\ActiveRecord;
 use yii\db\Command;
 use yii\db\Expression;
 use yii\db\Query;
-use yii\helpers\ArrayHelper;
 use yii\base\InvalidConfigException;
-use nanson\postgis\geometries;
 use yii\helpers\Json;
 
 /**
