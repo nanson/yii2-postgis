@@ -9,12 +9,11 @@ use yii\db\Query;
 use yii\helpers\ArrayHelper;
 use yii\base\InvalidConfigException;
 use nanson\postgis\geometries;
+use yii\helpers\Json;
 
 /**
  * Class PostgisBehavior
  * Handle model attribute stored in postgis format
- * @property string $type postgis geometry name
- * @property-read mixed $geomtry object implements IGeometry
  * @package nanson\postgis
  * @author Chernyavsky Denis <panopticum87@gmail.com>
  */
@@ -27,31 +26,19 @@ class PostgisBehavior extends Behavior
 	public $attribute;
 
 	/**
-	 * @var array list of class names for geometries
-	 *
-	 * ```php
-	 * [
-	 *      'POINT' => '\nanson\postgis\geometries\Point',
-	 *      'POLYGON' => '\nanson\postgis\geometries\Polygon',
-	 * ]
-	 * ```
-	 */
-	public $geometriesClassNames = [
-		geometries\Point::GEOMETRY_NAME => '\nanson\postgis\geometries\Point',
-		geometries\LineString::GEOMETRY_NAME => '\nanson\postgis\geometries\LineString',
-		geometries\Polygon::GEOMETRY_NAME => '\nanson\postgis\geometries\Polygon',
-		geometries\MultiPoint::GEOMETRY_NAME => '\nanson\postgis\geometries\MultiPoint',
-	];
-
-	/**
 	 * @var string geometry name
 	 */
-	protected $_type;
+	public $type;
 
 	/**
-	 * @var mixed object implements IGeometry
+	 * @var array list of names for geometries
 	 */
-	protected $_geometry;
+	protected $_geometriesNames = ['Point', 'MultiPoint', 'LineString', 'MultiLineString', 'Polygon', 'MultiPolygon',];
+
+	/**
+	 * @var array stored coordinates for afterSave
+	 */
+	protected $_coordinates;
 
 	/**
 	 * @inheritdoc
@@ -84,7 +71,7 @@ class PostgisBehavior extends Behavior
 			throw new InvalidConfigException("Class property 'geometry' does`t set");
 		}
 
-		if ( !isset($this->geometriesClassNames[$this->type]) ) {
+		if ( !in_array($this->type, $this->_geometriesNames) ) {
 			throw new InvalidConfigException('Unknow geometry');
 		}
 
@@ -92,7 +79,7 @@ class PostgisBehavior extends Behavior
 	}
 
 	/**
-	 * Convert array to WKT expression before save
+	 * Convert array to GeoJson expression before save
 	 * @return bool
 	 */
 	public function beforeSave()
@@ -100,7 +87,10 @@ class PostgisBehavior extends Behavior
 
 		$attributeChanged = $this->owner->isAttributeChanged($this->attribute);
 
-		$this->arrayToWkt();
+		// store coordinates for afterSave;
+		$this->_coordinates = $this->owner->{$this->attribute};
+
+		$this->coordinatesToGeoJson();
 
 		if (!$attributeChanged) {
 			$this->owner->setOldAttribute($this->attribute, $this->owner->{$this->attribute});
@@ -110,13 +100,13 @@ class PostgisBehavior extends Behavior
 	}
 
 	/**
-	 * Convert WKT to array after save
+	 * Convert attribute to array after save
 	 * @return bool
 	 */
 	public function afterSave()
 	{
 
-		$this->wktToArray();
+		$this->owner->{$this->attribute} = $this->_coordinates;
 
 		$this->owner->setOldAttribute($this->attribute, $this->owner->{$this->attribute});
 
@@ -124,14 +114,14 @@ class PostgisBehavior extends Behavior
 	}
 
 	/**
-	 * Convert postgis format to array after find
+	 * Convert attribute to array after find
 	 * @return bool
 	 */
 	public function afterFind()
 	{
-		$this->postgisToWkt();
+		$this->wkbToGeoJson();
 
-		$this->wktToArray();
+		$this->geoJsonToCoordinates();
 
 		$this->owner->setOldAttribute($this->attribute, $this->owner->{$this->attribute});
 
@@ -139,87 +129,60 @@ class PostgisBehavior extends Behavior
 	}
 
 	/**
-	 * Convert model attribute from array to WKT insert expression
+	 * Convert model attribute from array to GeoJson insert expression
 	 * @return Expression
 	 */
-	public function arrayToWkt()
+	public function coordinatesToGeoJson()
 	{
 
-		$attribute = $this->attribute;
+		$coordinates = $this->owner->{$this->attribute};
 
-		if ( !empty($this->owner->$attribute) ) {
-			$wkt = $this->geometry->arrayToWkt($this->owner->$attribute);
-			$query = "ST_GeomFromText('$wkt')";
-			$this->owner->$attribute = new Expression($query);
+		if ( !empty($coordinates) ) {
+
+			$geoJson = Json::encode([
+				'type' => $this->type,
+				'coordinates' => $coordinates
+			]);;
+
+			$query = "ST_GeomFromGeoJSON('$geoJson')";
+
+			$this->owner->{$this->attribute} = new Expression($query);
 		}
 		else {
-			$this->owner->$attribute = null;
+			$this->owner->{$this->attribute} = null;
 		}
 
 	}
 
 	/**
-	 * Convert WKT to array
+	 * Convert model attribute from GeoJson to array
 	 * @return array
 	 */
-	public function wktToArray()
+	public function geoJsonToCoordinates()
 	{
-		$attribute = $this->attribute;
+		if ( !empty($this->owner->{$this->attribute}) ) {
 
-		$this->owner->$attribute = str_replace(["ST_GeomFromText('", "')"], '', $this->owner->$attribute);
+			$geoJson = Json::decode($this->owner->{$this->attribute});
 
-		if ( !empty($this->owner->$attribute) ) {
-			$this->owner->$attribute = $this->geometry->wktToArray($this->owner->$attribute);
+			$this->owner->{$this->attribute} = $geoJson['coordinates'];
 		}
 	}
 
 	/**
-	 * Convert postgis geometry to WKT
+	 * Convert model attribute from wkb to GeoJson
 	 */
-	public function postgisToWkt()
+	public function wkbToGeoJson()
 	{
 		$attribute = $this->attribute;
 
 		if ( !empty($this->owner->$attribute) ) {
 			$query = new Query();
-			$res = $query->select("ST_asText('" . $this->owner->$attribute . "') as $attribute")->createCommand()->queryOne();
-			$wkt = $res[$attribute];
+			$res = $query->select("ST_asGeoJson('" . $this->owner->$attribute . "') as $attribute")->createCommand()->queryOne();
+			$geoJson = $res[$attribute];
 
-			$this->owner->$attribute = $wkt;
+			$this->owner->$attribute = $geoJson;
 		}
 
-	}
-
-	/**
-	 * Returns geometry object implements IGeometry
-	 * @return mixed
-	 */
-	public function getGeometry()
-	{
-		if( is_null( $this->_geometry ) ) {
-			$className = $this->geometriesClassNames[$this->type];
-			$this->_geometry = new $className;
-		}
-
-		return $this->_geometry;
-	}
-
-	/**
-	 * Returns postgis geomtry name
-	 * @return string
-	 */
-	public function getType()
-	{
-		return $this->_type;
-	}
-
-	/**
-	 * Set postgis geometry name
-	 * @param $value
-	 */
-	public function setType($value)
-	{
-		$this->_type = strtoupper($value);
 	}
 
 }
