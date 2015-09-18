@@ -7,7 +7,6 @@ use yii\db\Command;
 use yii\db\Expression;
 use yii\db\Query;
 use yii\base\InvalidConfigException;
-use yii\helpers\Json;
 
 /**
  * Class PostgisBehavior
@@ -150,10 +149,7 @@ class PostgisBehavior extends Behavior
 
 		if ( !empty($coordinates) ) {
 
-			$geoJson = Json::encode([
-				'type' => $this->type,
-				'coordinates' => $coordinates
-			]);;
+			$geoJson = GeoJsonHelper::toGeoJson($this->type, $coordinates);
 
 			$query = "ST_GeomFromGeoJSON('$geoJson')";
 
@@ -172,10 +168,7 @@ class PostgisBehavior extends Behavior
 	public function geoJsonToCoordinates()
 	{
 		if ( !empty($this->owner->{$this->attribute}) ) {
-
-			$geoJson = Json::decode($this->owner->{$this->attribute});
-
-			$this->owner->{$this->attribute} = $geoJson['coordinates'];
+			$this->owner->{$this->attribute} = GeoJsonHelper::toArray($this->owner->{$this->attribute});
 		}
 	}
 
