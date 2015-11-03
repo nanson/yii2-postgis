@@ -149,9 +149,14 @@ class PostgisBehavior extends Behavior
 
 		if ( !empty($coordinates) ) {
 
-			$geoJson = GeoJsonHelper::toGeoJson($this->type, $coordinates);
+			if (is_array($coordinates)) {
+				$geoJson = GeoJsonHelper::toGeoJson($this->type, $coordinates);
 
-			$query = "ST_GeomFromGeoJSON('$geoJson')";
+				$query = "ST_GeomFromGeoJSON('$geoJson')";
+			}
+			else {
+				$query = "'$coordinates'";
+			}
 
 			$this->owner->{$this->attribute} = new Expression($query);
 		}
