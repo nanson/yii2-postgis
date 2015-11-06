@@ -1,6 +1,6 @@
 <?php
 
-namespace nanson\postgis;
+namespace nanson\postgis\helpers;
 use yii\helpers\Json;
 
 /**
@@ -37,6 +37,22 @@ class GeoJsonHelper
 		}
 
 		return Json::encode($geoJson);
+
+	}
+
+	/**
+	 * Convert coordinates to Geometry Expression
+	 * @param $type geometry type
+	 * @param $coordinates array of coordinates
+	 * @param int $srid SRID
+	 * @return string
+	 */
+	public static function toGeometry($type, $coordinates, $srid = 4326)
+	{
+
+		$geoJson = self::toGeoJson($type, $coordinates, $srid);
+
+		return "ST_GeomFromGeoJSON('$geoJson')";
 
 	}
 

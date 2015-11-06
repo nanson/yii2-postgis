@@ -1,24 +1,36 @@
 <?php
-namespace nanson\postgis;
+namespace nanson\postgis\behaviors;
 
-use yii\base\Behavior;
-use yii\db\ActiveRecord;
+use yii\db\Query;
 use yii\db\Command;
 use yii\db\Expression;
-use yii\db\Query;
+use yii\db\ActiveRecord;
+use yii\base\Behavior;
 use yii\base\InvalidConfigException;
+use nanson\postgis\helpers\GeoJsonHelper;
 
 /**
  * Class PostgisBehavior
- * Handle model attribute stored in postgis format
+ * Handles model attribute stored in postgis format (via GeoJson)
+ * @property-read array geometryNames available geometry names
  * @package nanson\postgis
  * @author Chernyavsky Denis <panopticum87@gmail.com>
  */
-class PostgisBehavior extends Behavior
+class GeometryBehavior extends Behavior
 {
 
 	/**
-	 * @var string attribute name that is to be automatically handled
+	 * Geometry names
+	 */
+	const GEOMETRY_POINT = 'Point';
+	const GEOMETRY_MULTIPOINT = 'MultiPoint';
+	const GEOMETRY_LINESTRING = 'LineString';
+	const GEOMETRY_MULTILINESTRING = 'MultiLineString';
+	const GEOMETRY_POLYGON = 'Polygon';
+	const GEOMETRY_MULTIPOLYGON = 'MultiPolygon';
+
+	/**
+	 * @var string attribute name that will be automatically handled
 	 */
 	public $attribute;
 
@@ -28,14 +40,9 @@ class PostgisBehavior extends Behavior
 	public $type;
 
 	/**
-	 * @var bool don't convert attribute afterFind
+	 * @var bool don't convert attribute afterFind if it in Postgis binary format (it requires a separate query)
 	 */
-	public $exceptAfterFind = false;
-
-	/**
-	 * @var array list of names for geometries
-	 */
-	protected $_geometriesNames = ['Point', 'MultiPoint', 'LineString', 'MultiLineString', 'Polygon', 'MultiPolygon',];
+	public $skipAfterFindPostgis = false;
 
 	/**
 	 * @var array stored coordinates for afterSave
@@ -49,15 +56,12 @@ class PostgisBehavior extends Behavior
 	{
 
 		$events = [
-			ActiveRecord::EVENT_BEFORE_INSERT => "beforeSave",
-			ActiveRecord::EVENT_BEFORE_UPDATE => "beforeSave",
-			ActiveRecord::EVENT_AFTER_INSERT => "afterSave",
-			ActiveRecord::EVENT_AFTER_UPDATE => "afterSave",
+			ActiveRecord::EVENT_BEFORE_INSERT => 'beforeSave',
+			ActiveRecord::EVENT_BEFORE_UPDATE => 'beforeSave',
+			ActiveRecord::EVENT_AFTER_INSERT => 'afterSave',
+			ActiveRecord::EVENT_AFTER_UPDATE => 'afterSave',
+			ActiveRecord::EVENT_AFTER_FIND => 'afterFind',
 		];
-
-		if ( !$this->exceptAfterFind ) {
-			$events[ActiveRecord::EVENT_AFTER_FIND] = "afterFind";
-		}
 
 		return $events;
 
@@ -78,8 +82,8 @@ class PostgisBehavior extends Behavior
 			throw new InvalidConfigException("Class property 'geometry' does`t set");
 		}
 
-		if ( !in_array($this->type, $this->_geometriesNames) ) {
-			throw new InvalidConfigException('Unknow geometry');
+		if ( !in_array($this->type, $this->geometryNames) ) {
+			throw new InvalidConfigException('Unknow geometry type');
 		}
 
 		parent::init();
@@ -128,7 +132,14 @@ class PostgisBehavior extends Behavior
 	{
 
 		if ( !is_object( json_decode($this->owner->{$this->attribute}) ) ) {
-			$this->wkbToGeoJson();
+
+			if ($this->skipAfterFindPostgis) {
+				return true;
+			}
+			else {
+				$this->postgisToGeoJson();
+			}
+
 		}
 
 		$this->geoJsonToCoordinates();
@@ -139,24 +150,33 @@ class PostgisBehavior extends Behavior
 	}
 
 	/**
+	 * Return available geometry names
+	 * @return array
+	 */
+	public function getGeometryNames()
+	{
+		return [
+			self::GEOMETRY_POINT,
+			self::GEOMETRY_MULTIPOINT,
+			self::GEOMETRY_LINESTRING,
+			self::GEOMETRY_MULTILINESTRING,
+			self::GEOMETRY_POLYGON,
+			self::GEOMETRY_MULTIPOLYGON,
+		];
+	}
+
+	/**
 	 * Convert model attribute from array to GeoJson insert expression
 	 * @return Expression
 	 */
-	public function coordinatesToGeoJson()
+	protected function coordinatesToGeoJson()
 	{
 
 		$coordinates = $this->owner->{$this->attribute};
 
 		if ( !empty($coordinates) ) {
 
-			if (is_array($coordinates)) {
-				$geoJson = GeoJsonHelper::toGeoJson($this->type, $coordinates);
-
-				$query = "ST_GeomFromGeoJSON('$geoJson')";
-			}
-			else {
-				$query = "'$coordinates'";
-			}
+			$query = is_array($coordinates) ? GeoJsonHelper::toGeometry($coordinates) : "'$coordinates'";
 
 			$this->owner->{$this->attribute} = new Expression($query);
 		}
@@ -170,7 +190,7 @@ class PostgisBehavior extends Behavior
 	 * Convert model attribute from GeoJson to array
 	 * @return array
 	 */
-	public function geoJsonToCoordinates()
+	protected function geoJsonToCoordinates()
 	{
 		if ( !empty($this->owner->{$this->attribute}) ) {
 			$this->owner->{$this->attribute} = GeoJsonHelper::toArray($this->owner->{$this->attribute});
@@ -178,9 +198,9 @@ class PostgisBehavior extends Behavior
 	}
 
 	/**
-	 * Convert model attribute from wkb to GeoJson
+	 * Convert model attribute from Postgis binary to GeoJson
 	 */
-	public function wkbToGeoJson()
+	protected function postgisToGeoJson()
 	{
 		$attribute = $this->attribute;
 
