@@ -19,7 +19,7 @@ class GeoJsonHelper
 	 * @param int $srid SRID
 	 * @return json
 	 */
-	public static function toGeoJson($type, $coordinates, $srid = 4326)
+	public static function toGeoJson($type, $coordinates, $srid=4326)
 	{
 
 		$geoJson = [
@@ -47,7 +47,7 @@ class GeoJsonHelper
 	 * @param int $srid SRID
 	 * @return string
 	 */
-	public static function toGeometry($type, $coordinates, $srid = 4326)
+	public static function toGeometry($type, $coordinates, $srid=4326)
 	{
 
 		$geoJson = self::toGeoJson($type, $coordinates, $srid);

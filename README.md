@@ -34,13 +34,13 @@ MyModel extends ActiveRecord
 		return [
 			[
 				'class' => GeometryBehavior::className(),
-				'attribute' => 'point',
 				'type' => GeometryBehavior::GEOMETRY_POINT,
+				'attribute' => 'point',
 			],
 			[
 				'class' => GeometryBehavior::className(),
-				'attribute' => 'line',
 				'type' => GeometryBehavior::GEOMETRY_LINESTRING,
+				'attribute' => 'line',
 				'skipAfterFindPostgis' => true,
 			],
 		];
@@ -131,3 +131,9 @@ This trait extends ActiveQuery for working with Postgis data.
 
 ## GeoJsonHelper
 Helper for working with Geo Json
+
+| Method										|  Returns					| Description |
+|-----------------------------------------------|---------------------------|-------------|
+| toArray($geoJson)								| array						| returns coordinates array by Geo Json
+| toGeoJson($type, $coordinates, $srid=4326)	| string (geo json)			| returns Geo Json by geometry type, coordinates array and SRID
+| toGeometry($type, $coordinates, $srid=4326)	| string (sql expression)	| the same, that `toGeoJson`, but wraps result by `"ST_GeomFromGeoJSON('$geoJson')"`
