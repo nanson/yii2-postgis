@@ -1,6 +1,6 @@
 # Yii2 Postgis
 
-Extension for working with postgis. As intermediate fromat used Geo Json.
+Extension for working with postgis. As intermediate format used Geo Json.
 
 ## Installing
 
@@ -16,7 +16,7 @@ The preferred way to install this extension is through Composer.
 
 ## GeometryBehavior
 
-Converts coordinates array to SQL expression for saving in postgis binary format befor insert/update and from postgis binary to array after find.
+Converts coordinates array to SQL expression for saving in postgis binary format before insert/update and from postgis binary to array after find.
 
 ```php
 <?php
@@ -127,7 +127,19 @@ $model->save();
 
 ## PostgisQueryTrait
 
-This trait extends ActiveQuery for working with Postgis data.
+Extends ActiveQuery for working with Postgis data.
+
+| Option			| Type 		| Default	| Description	|
+|-------------------|-----------|-----------|---------------|
+| autoGeoJson		| boolean	| true		| select all geo columns as GeoJson automatically |
+| geoFields			| array		| all table columns with data type `geometry` or `geography`	| table columns, that must be selected as Geo Json |
+| exceptGeoFields	| boolean	| false		| exclude all geo columns from select statement |
+| exceptFields		| array		| []		| columns, which must be excluded from select statement |
+
+| Method						| Description	|
+|-------------------------------|---------------|
+| withGeoFields($fields=null)	| Add columns, that must be selected as Geo Json. Accepts `null`, `string`, `array`. If `fields` is null - all `geoFileds` will be added. |
+| excludeFields($fields=null)	| Exclude columns from select statement. Accepts `null`, `string`, `array`. If `fields` is null - all `exceptFields` will be excluded from select statement. |
 
 ## GeoJsonHelper
 Helper for working with Geo Json
