@@ -9,7 +9,7 @@ The preferred way to install this extension is through Composer.
 ```json
 {
   "require": {
-    "perspectivain/php-postgis": "*"
+    "nanson/yii2-postgis": "*"
   }
 }
 ```
