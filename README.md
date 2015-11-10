@@ -55,7 +55,7 @@ MyModel extends ActiveRecord
 
 $model = new MyModel;
 
-$model->point = [39.234, 54,456];
+$model->point = [39.234, 54.456];
 $model->line = [[102.0, 0.0], [103.0, 1.0], [104.0, 0.0], [105.0, 1.0]];
 
 $model->save();
