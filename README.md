@@ -41,6 +41,7 @@ MyModel extends ActiveRecord
 				'class' => GeometryBehavior::className(),
 				'type' => GeometryBehavior::GEOMETRY_LINESTRING,
 				'attribute' => 'line',
+				// skip attribute if it was not selected as Geo Json (by PostgisQueryTrait), because it requires a separate query.
 				'skipAfterFindPostgis' => true,
 			],
 		];
@@ -107,7 +108,7 @@ MyModel extends ActiveRecord
 
 $model = new MyModel;
 
-$model->point = [39.234, 54,456];
+$model->point = [39.234, 54.456];
 $model->radius = 5;
 
 // It will be save St_Buffer for `$model->point` with `$model->radius` in `$model->buffer`
