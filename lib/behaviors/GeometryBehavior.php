@@ -176,7 +176,7 @@ class GeometryBehavior extends Behavior
 
 		if ( !empty($coordinates) ) {
 
-			$query = is_array($coordinates) ? GeoJsonHelper::toGeometry($coordinates) : "'$coordinates'";
+			$query = is_array($coordinates) ? GeoJsonHelper::toGeometry($this->type, $coordinates) : "'$coordinates'";
 
 			$this->owner->{$this->attribute} = new Expression($query);
 		}
