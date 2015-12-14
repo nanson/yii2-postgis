@@ -1,7 +1,7 @@
 {
 	"name": "nanson/yii2-postgis",
 	"description": "Yii2-extension to work with postgis data",
-	"keywords": ["postgis", "yii2", "yii", "extension", "behavior", "posrgre", "postgres", "postgresql"],
+	"keywords": ["postgis", "yii2", "yii", "extension", "behavior", "postgre", "postgres", "postgresql"],
 	"homepage": "https://github.com/nanson/yii2-postgis",
 	"type": "yii2-extension",
 	"license": "BSD-3-Clause",
