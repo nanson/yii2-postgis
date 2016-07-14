@@ -24,7 +24,7 @@ Converts coordinates array to SQL expression for saving in postgis binary format
 use yii\db\ActiveRecord;
 use nanson\postgis\behaviors\GeometryBehavior;
 
-MyModel extends ActiveRecord
+class MyModel extends ActiveRecord
 {
 
 	...
@@ -68,7 +68,7 @@ $model->save();
 | type					| string	|			| geometry type: `Point`, `LineString`, `Polygon`, `MultiPoint`, `MultiLineString`, `MultiPolygon`|
 | skipAfterFindPostgis	| boolean	| false		| skip convertion after find, if data in postgis binary  (it requires a separate query, look `PostgisQueryTrait`)|
 
-##StBufferBehavior
+## StBufferBehavior
 Generate SQL expression before insert/update based on geometry and radius
 
 ```php
@@ -78,7 +78,7 @@ use yii\db\ActiveRecord;
 use nanson\postgis\behaviors\GeometryBehavior;
 use nanson\postgis\behaviors\StBufferBehavior;
 
-MyModel extends ActiveRecord
+class MyModel extends ActiveRecord
 {
 
 	...
