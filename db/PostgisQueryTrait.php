@@ -89,7 +89,7 @@ trait PostgisQueryTrait
 
                 if (isset($this->tableColumnsIndexes[$field])) {
                     $key = $this->tableColumnsIndexes[$field];
-                    $this->select[$key] = "ST_AsGeoJson($this->tableName.$field) as \"$field\"";
+                    $this->select[$key] = "ST_AsGeoJson($this->tableName.[[$field]]) as [[$field]]";
                 }
 
             }
@@ -178,7 +178,7 @@ trait PostgisQueryTrait
     public function getTableName()
     {
         $class = $this->modelClass;
-        return $class::tableName();
+        return trim($class::tableName(), '{}');
     }
 
     /**
