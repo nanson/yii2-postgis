@@ -178,7 +178,7 @@ trait PostgisQueryTrait
     public function getTableName()
     {
         $class = $this->modelClass;
-        return trim($class::tableName(), '{}');
+        return $class::tableName();
     }
 
     /**
