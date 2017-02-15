@@ -9,7 +9,8 @@
     "behavior",
     "postgre",
     "postgres",
-    "postgresql"
+    "postgresql",
+    "spatial"
   ],
   "homepage": "https://github.com/nanson/yii2-postgis",
   "type": "yii2-extension",
