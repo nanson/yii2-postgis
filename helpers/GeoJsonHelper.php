@@ -15,8 +15,8 @@ class GeoJsonHelper
 
     /**
      * Convert coordinates to GeoJson
-     * @param $type geometry type
-     * @param $coordinates array of coordinates
+     * @param string $type geometry type
+     * @param array $coordinates array of coordinates
      * @param int $srid SRID
      * @return string json
      */
@@ -44,7 +44,7 @@ class GeoJsonHelper
     /**
      * Convert coordinates to Geometry Expression
      * @param string $type geometry type
-     * @param $coordinates array of coordinates
+     * @param array $coordinates array of coordinates
      * @param int $srid SRID
      * @return string
      */
@@ -59,7 +59,7 @@ class GeoJsonHelper
 
     /**
      * Convert GeoJson to coordinates
-     * @param $geoJson GeoJson
+     * @param string $geoJson GeoJson
      * @return mixed
      */
     public static function toArray($geoJson)
