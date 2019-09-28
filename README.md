@@ -36,6 +36,9 @@ class MyModel extends ActiveRecord
                 'class' => GeometryBehavior::className(),
                 'type' => GeometryBehavior::GEOMETRY_POINT,
                 'attribute' => 'point',
+                // explicitly set custom db connection if you do not want to use
+                // static::getDb() or Yii::$app->getDb() connections
+                'db' => 'db_custom'
             ],
             [
                 'class' => GeometryBehavior::className(),
