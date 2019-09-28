@@ -28,5 +28,11 @@
     "psr-4": {
       "nanson\\postgis\\": ""
     }
-  }
+  },
+  "repositories": [
+    {
+      "type": "composer",
+      "url": "https://asset-packagist.org"
+    }
+  ]
 }

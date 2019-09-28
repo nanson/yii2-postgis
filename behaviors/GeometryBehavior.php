@@ -1,13 +1,14 @@
 <?php
 namespace nanson\postgis\behaviors;
 
-use yii\db\Query;
-use yii\db\Command;
-use yii\db\Expression;
-use yii\db\ActiveRecord;
+use nanson\postgis\helpers\GeoJsonHelper;
 use yii\base\Behavior;
 use yii\base\InvalidConfigException;
-use nanson\postgis\helpers\GeoJsonHelper;
+use yii\db\ActiveRecord;
+use yii\db\Connection;
+use yii\db\Expression;
+use yii\db\Query;
+use yii\di\Instance;
 
 /**
  * Class PostgisBehavior
@@ -28,6 +29,15 @@ class GeometryBehavior extends Behavior
     const GEOMETRY_MULTILINESTRING = 'MultiLineString';
     const GEOMETRY_POLYGON = 'Polygon';
     const GEOMETRY_MULTIPOLYGON = 'MultiPolygon';
+
+    /**
+     * @var string|array|callable|Connection Db connection for PostgreSQL database with installed Postgis extension
+     *                                       to convert model attribute from Postgis binary to GeoJson.
+     *                                       Will be used as fallback if [[owner]] does not provide db connection via [[getDb()]] method.
+     *                                       You can configure this connection explicitly in [[behaviors()]]
+     *                                       section or via container definitions in your app config.
+     */
+    public $db;
 
     /**
      * @var string attribute name that will be automatically handled
@@ -126,7 +136,10 @@ class GeometryBehavior extends Behavior
 
     /**
      * Convert attribute to array after find
+     *
      * @return bool
+     * @throws InvalidConfigException
+     * @throws \yii\db\Exception
      */
     public function afterFind()
     {
@@ -197,19 +210,65 @@ class GeometryBehavior extends Behavior
 
     /**
      * Convert model attribute from Postgis binary to GeoJson
+     *
+     * @throws InvalidConfigException
+     * @throws \yii\db\Exception
      */
     protected function postgisToGeoJson()
     {
         $attribute = $this->attribute;
 
         if (!empty($this->owner->$attribute)) {
+            $db = $this->_getDb();
             $query = new Query();
-            $res = $query->select("ST_asGeoJson('" . $this->owner->$attribute . "') as $attribute")->createCommand()->queryOne();
+            $res = $query->select("ST_asGeoJson('" . $this->owner->$attribute . "') as $attribute")->createCommand($db)->queryOne();
             $geoJson = $res[$attribute];
 
             $this->owner->$attribute = $geoJson;
         }
-
     }
 
+    /**
+     * @var Connection
+     */
+    private $_db;
+
+    /**
+     * @var Connection
+     */
+    private $_dbInitialized = false;
+
+    /**
+     * @return Connection|null
+     * @throws InvalidConfigException
+     */
+    private function _getDb()
+    {
+        if(empty($this->_db) && !$this->_dbInitialized){
+            if(method_exists($this->owner, 'getDb') && ($db = $this->owner->getDb()) !== null){
+                // Do not use $this->owner->canGetProperty('db') as $this->owner->db,
+                // since owner can have db attribute, which is not component name
+                // and owner may be not an ActiveRecord instance
+
+                // ActiveRecord default getDb() returns already created Connection object,
+                // but there is may be a name, config or lambda which we also want to respect
+                if((is_string($db) || is_array($db) || is_callable($db)) && !$db instanceof Connection){
+                    $db = Instance::ensure($db, Connection::class);
+                }
+            }elseif ($this->db !== null){
+                // if owner does not provide db connection, the use defined fallback
+                $db = Instance::ensure($this->db, Connection::class);
+            }else{
+                // do not execute the following code, since db component may change during app lifecycle and
+                // we want to respect such behavior
+                // $db = Yii::$app->getDb()
+                $db = null;
+            }
+
+            $this->_db = $db;
+            $this->_dbInitialized = true;
+        }
+
+        return $this->_db;
+    }
 }
