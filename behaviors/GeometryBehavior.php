@@ -245,7 +245,10 @@ class GeometryBehavior extends Behavior
     private function _getDb()
     {
         if(empty($this->_db) && !$this->_dbInitialized){
-            if(method_exists($this->owner, 'getDb') && ($db = $this->owner->getDb()) !== null){
+            if ($this->db !== null){
+                 // if db connection is set explicitly, use it
+                 $db = Instance::ensure($this->db, Connection::class);
+            }elseif(method_exists($this->owner, 'getDb') && ($db = $this->owner->getDb()) !== null){
                 // Do not use $this->owner->canGetProperty('db') as $this->owner->db,
                 // since owner can have db attribute, which is not component name
                 // and owner may be not an ActiveRecord instance
@@ -255,9 +258,6 @@ class GeometryBehavior extends Behavior
                 if((is_string($db) || is_array($db) || is_callable($db)) && !$db instanceof Connection){
                     $db = Instance::ensure($db, Connection::class);
                 }
-            }elseif ($this->db !== null){
-                // if owner does not provide db connection, the use defined fallback
-                $db = Instance::ensure($this->db, Connection::class);
             }else{
                 // do not execute the following code, since db component may change during app lifecycle and
                 // we want to respect such behavior
