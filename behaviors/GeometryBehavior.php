@@ -48,7 +48,13 @@ class GeometryBehavior extends Behavior
      * @var string geometry name
      */
     public $type;
+    
+    /**
+     * @var string srid number
+     */
+    public $srid;
 
+    /**
     /**
      * @var bool don't convert attribute afterFind if it in Postgis binary format (it requires a separate query)
      */
@@ -188,7 +194,7 @@ class GeometryBehavior extends Behavior
 
         if (!empty($coordinates)) {
 
-            $query = is_array($coordinates) ? GeoJsonHelper::toGeometry($this->type, $coordinates) : "'$coordinates'";
+            $query = is_array($coordinates) ? GeoJsonHelper::toGeometry($this->type, $coordinates, $this->srid) : "'$coordinates'";
 
             $this->owner->{$this->attribute} = new Expression($query);
         } else {
